@@ -26,8 +26,8 @@ ENV NODE_ENV=production
 # Create a non-root group and user for security compliance
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup
 
-# Copy built app and dependencies from builder stage
-COPY --from=builder /app /app
+# Copy built app from builder stage directly to current dir with proper ownership
+COPY --chown=appuser:appgroup --from=builder /app .
 
 # Switch ownership to non-root user
 USER appuser
