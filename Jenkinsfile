@@ -37,13 +37,16 @@ pipeline {
             }
         }
 
-        // Stage 3: Dependency Security Scan via Snyk
+        // Stage 3: Dependency Security Scan via Snyk Docker Container
         stage('Snyk Security Scan') {
             steps {
-                echo '[INFO] Scanning node dependencies for vulnerabilities using Snyk...'
+                echo '[INFO] Scanning node dependencies using official Snyk container...'
                 sh '''
-                    npx --yes snyk auth $SNYK_TOKEN
-                    npx --yes snyk test --severity-threshold=high || true
+                    docker run --rm \
+                        -e SNYK_TOKEN=${SNYK_TOKEN} \
+                        -v ${WORKSPACE}:/project \
+                        -w /project \
+                        snyk/snyk:node snyk test --severity-threshold=high || true
                 '''
             }
         }
