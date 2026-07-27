@@ -1,11 +1,6 @@
 pipeline {
     agent any
 
-    tools {
-        // Use auto-installed SonarQube Scanner CLI
-        sonarRunner 'sonar-scanner'
-    }
-
     environment {
         // Define application metadata and image name
         APP_NAME = 'ultimate-devops-app'
@@ -26,14 +21,18 @@ pipeline {
         stage('SonarQube Quality Scan') {
             steps {
                 echo '[INFO] Starting Static Code Analysis via SonarQube...'
-                withSonarQubeEnv('SonarQube') {
-                    sh '''
-                        sonar-scanner \
-                        -Dsonar.projectKey=Ultimate-DevOps-Project \
-                        -Dsonar.projectName="Ultimate DevOps Project" \
-                        -Dsonar.sources=. \
-                        -Dsonar.exclusions=node_modules/**,coverage/**
-                    '''
+                script {
+                    // Dynamically resolve SonarQube Scanner tool binary path
+                    def scannerHome = tool 'sonar-scanner'
+                    withSonarQubeEnv('SonarQube') {
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner \
+                            -Dsonar.projectKey=Ultimate-DevOps-Project \
+                            -Dsonar.projectName="Ultimate DevOps Project" \
+                            -Dsonar.sources=. \
+                            -Dsonar.exclusions=node_modules/**,coverage/**
+                        """
+                    }
                 }
             }
         }
