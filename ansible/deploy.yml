@@ -1,0 +1,16 @@
+---
+- name: Deploy Application to Kubernetes Cluster
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Ensure Kubernetes deployment is applied
+      command: kubectl apply -f k8s/deployment.yaml
+
+    - name: Ensure Kubernetes service is applied
+      command: kubectl apply -f k8s/service.yaml
+
+    - name: Force rollout restart to pick up new docker image
+      command: kubectl rollout restart deployment/ultimate-devops-app
+
+    - name: Wait for deployment rollout to complete
+      command: kubectl rollout status deployment/ultimate-devops-app --timeout=60s

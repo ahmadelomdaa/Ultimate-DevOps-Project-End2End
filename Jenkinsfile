@@ -22,7 +22,6 @@ pipeline {
             steps {
                 echo '[INFO] Starting Static Code Analysis via SonarQube...'
                 script {
-                    // Dynamically resolve SonarQube Scanner tool binary path
                     def scannerHome = tool 'sonar-scanner'
                     withSonarQubeEnv('SonarQube') {
                         sh """
@@ -37,10 +36,10 @@ pipeline {
             }
         }
 
-        // Stage 3: Dependency Security Scan via Snyk Docker Container
+        // Stage 3: Dependency Security Scan via Snyk Container
         stage('Snyk Security Scan') {
             steps {
-                echo '[INFO] Scanning node dependencies using official Snyk container with shared volume...'
+                echo '[INFO] Scanning node dependencies using official Snyk container...'
                 sh '''
                     docker run --rm \
                         --volumes-from jenkins-server \
@@ -70,6 +69,14 @@ pipeline {
                 """
             }
         }
+
+        // Stage 6: Automated Deployment via Ansible to Kubernetes
+        stage('Deploy to K8s via Ansible') {
+            steps {
+                echo '[INFO] Executing Ansible Playbook for Kubernetes Deployment...'
+                sh 'ansible-playbook ansible/deploy.yml'
+            }
+        }
     }
 
     post {
@@ -78,10 +85,10 @@ pipeline {
             cleanWs()
         }
         success {
-            echo '[SUCCESS] Pipeline completed successfully! Application artifact is verified.'
+            echo '[SUCCESS] Pipeline completed successfully! Application deployed to K8s.'
         }
         failure {
-            echo '[ERROR] Pipeline failed! Check logs for security or quality errors.'
+            echo '[ERROR] Pipeline failed! Check logs for errors.'
         }
     }
 }
