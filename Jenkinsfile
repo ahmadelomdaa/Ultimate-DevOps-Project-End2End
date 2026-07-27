@@ -40,12 +40,12 @@ pipeline {
         // Stage 3: Dependency Security Scan via Snyk Docker Container
         stage('Snyk Security Scan') {
             steps {
-                echo '[INFO] Scanning node dependencies using official Snyk container...'
+                echo '[INFO] Scanning node dependencies using official Snyk container with shared volume...'
                 sh '''
                     docker run --rm \
+                        --volumes-from jenkins-server \
+                        -w ${WORKSPACE} \
                         -e SNYK_TOKEN=${SNYK_TOKEN} \
-                        -v ${WORKSPACE}:/project \
-                        -w /project \
                         snyk/snyk:node snyk test --severity-threshold=high || true
                 '''
             }
@@ -59,11 +59,15 @@ pipeline {
             }
         }
 
-        // Stage 5: Container Security Scan via Trivy
+        // Stage 5: Container Security Scan via Trivy Container
         stage('Trivy Image Vulnerability Scan') {
             steps {
-                echo "[INFO] Scanning Docker image ${APP_NAME}:${IMAGE_TAG} with Trivy..."
-                sh "trivy image --severity HIGH,CRITICAL ${APP_NAME}:${IMAGE_TAG}"
+                echo "[INFO] Scanning Docker image ${APP_NAME}:${IMAGE_TAG} with Trivy Container..."
+                sh """
+                    docker run --rm \
+                        -v /var/run/docker.sock:/var/run/docker.sock \
+                        aquasec/trivy:latest image --severity HIGH,CRITICAL ${APP_NAME}:${IMAGE_TAG}
+                """
             }
         }
     }
